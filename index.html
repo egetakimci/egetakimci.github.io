@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ege — Portföy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --border: #1e2d45;
+      --accent: #4f8ef7;
+      --accent2: #a78bfa;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --mono: 'Space Mono', monospace;
+      --sans: 'Space Grotesk', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── CANVAS ── */
+    #canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.35;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 2.5rem;
+      background: rgba(10,14,26,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── SECTIONS ── */
+    section {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 80px;
+    }
+
+    .hero-tag {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--accent);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 1.1rem;
+      color: var(--muted);
+      max-width: 540px;
+      margin-bottom: 2.5rem;
+      line-height: 1.8;
+    }
+
+    .btn-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.4rem;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: 0.04em;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #3b7de8; }
+
+    .btn-secondary {
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── ABOUT ── */
+    #about { padding-top: 120px; padding-bottom: 80px; }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    #about p {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 620px;
+      margin-bottom: 1.2rem;
+      line-height: 1.85;
+    }
+
+    #about p strong { color: var(--text); font-weight: 500; }
+
+    /* ── SKILLS ── */
+    .skills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 2rem;
+    }
+
+    .skill-tag {
+      padding: 0.35rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+
+    .skill-tag:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── PROJECTS ── */
+    #projects { padding-top: 80px; padding-bottom: 80px; }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 2.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.6rem;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      color: inherit;
+    }
+
+    .project-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .card-icon {
+      font-size: 1.4rem;
+    }
+
+    .card-arrow {
+      color: var(--muted);
+      font-size: 1rem;
+      transition: color 0.2s;
+    }
+    .project-card:hover .card-arrow { color: var(--accent); }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+
+    .card-desc {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 1.2rem;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .card-tag {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--accent2);
+      background: rgba(167,139,250,0.08);
+      padding: 0.2rem 0.55rem;
+      border-radius: 3px;
+    }
+
+    /* ── CONTACT ── */
+    #contact { padding-top: 80px; padding-bottom: 120px; }
+
+    .contact-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3rem;
+    }
+
+    .contact-box h2 { margin-bottom: 0.75rem; }
+
+    .contact-box p {
+      color: var(--muted);
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+
+    .contact-links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 600px) {
+      nav { padding: 1rem 1.25rem; }
+      .nav-links { gap: 1rem; }
+      .projects-grid { grid-template-columns: 1fr; }
+      .contact-box { padding: 1.75rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #canvas { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<nav>
+  <span class="nav-logo">ege.dev</span>
+  <ul class="nav-links">
+    <li><a href="#about">hakkımda</a></li>
+    <li><a href="#projects">projeler</a></li>
+    <li><a href="#contact">iletişim</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <p class="hero-tag">// fizik · simülasyon · kod</p>
+  <h1>Merhaba, ben<br><span>Ege.</span></h1>
+  <p class="hero-desc">
+    Evrenin nasıl çalıştığını anlamaya çalışıyorum —
+    çoğu zaman kod yazarak. Orbital mekanikten başlayıp
+    nereye kadar gideceğimi henüz bilmiyorum, ama
+    yol boyunca her şeyi buraya yazacağım.
+  </p>
+  <div class="btn-group">
+    <a href="#projects" class="btn btn-primary">→ Projelere bak</a>
+    <a href="#contact" class="btn btn-secondary">İletişime geç</a>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <p class="section-label">// hakkımda</p>
+  <p>
+    Fizik ve simülasyona ilgi duyuyorum. Konuları anlamanın en iyi yolunun
+    onları <strong>sıfırdan yazmak</strong> olduğunu düşünüyorum — Euler entegrasyonundan
+    Verlet'e, tek gezegenli sistemlerden çift cisim problemine kadar.
+  </p>
+  <p>
+    Henüz öğrenme sürecindeyim ve bunu gizlemiyorum. Bu site hem
+    <strong>ne yaptığımı</strong> göstermek, hem de ilerleyen zamanda
+    nereye geldiğimi hatırlamak için burada.
+  </p>
+
+  <div class="skills-grid">
+    <span class="skill-tag">Python</span>
+    <span class="skill-tag">JavaScript</span>
+    <span class="skill-tag">Orbital Mekanik</span>
+    <span class="skill-tag">Nümerik İntegrasyon</span>
+    <span class="skill-tag">Newton Mekaniği</span>
+    <span class="skill-tag">Fizik Simülasyonu</span>
+    <span class="skill-tag">HTML / CSS</span>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <p class="section-label">// projeler</p>
+  <h2>Yaptıklarım</h2>
+
+  <div class="projects-grid">
+
+    <a class="project-card" href="#" onclick="return false;">
+      <div class="card-top">
+        <span class="card-icon">🪐</span>
+        <span class="card-arrow">↗</span>
+      </div>
+      <div class="card-title">Tek Gezegen Simülasyonu</div>
+      <div class="card-desc">
+        Newton'un yerçekimi yasasını kullanarak Güneş etrafında
+        eliptik yörüngede dönen bir gezegenin simülasyonu.
+        Euler entegrasyonu ile adım adım çözüm.
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">JavaScript</span>
+        <span class="card-tag">Canvas API</span>
+        <span class="card-tag">Euler</span>
+      </div>
+    </a>
+
+    <a class="project-card" href="#" onclick="return false;">
+      <div class="card-top">
+        <span class="card-icon">⚖️</span>
+        <span class="card-arrow">↗</span>
+      </div>
+      <div class="card-title">İki Cisim — Ağırlık Merkezi</div>
+      <div class="card-desc">
+        İki cismin birbirinin etrafında döndüğü sistem.
+        Ağırlık merkezinin (barycenter) hareketsiz kalmasını
+        Verlet entegrasyonuyla gözlemleyebilirsin.
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">JavaScript</span>
+        <span class="card-tag">Verlet</span>
+        <span class="card-tag">Barycenter</span>
+      </div>
+    </a>
+
+    <a class="project-card" href="#" onclick="return false;" style="border-style: dashed; opacity: 0.5;">
+      <div class="card-top">
+        <span class="card-icon">🔭</span>
+        <span class="card-arrow" style="opacity:0.4">↗</span>
+      </div>
+      <div class="card-title">Yakında...</div>
+      <div class="card-desc">
+        Üçüncü proje henüz yapım aşamasında. N-cisim problemi
+        veya atmosferik sürüklenme modeli olabilir.
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">WIP</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <p class="section-label">// iletişim</p>
+  <div class="contact-box">
+    <h2>Konuşalım</h2>
+    <p>Fizik, simülasyon ya da başka bir şey hakkında konuşmak istersen ulaşabilirsin.</p>
+    <div class="contact-links">
+      <a href="mailto:ege@ornek.com" class="btn btn-primary">✉ E-posta gönder</a>
+      <a href="https://github.com/" target="_blank" class="btn btn-secondary">⌥ GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Ege &nbsp;·&nbsp; <span id="year"></span> &nbsp;·&nbsp; yerçekimi ile çalışır</p>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // ── Yörünge animasyonu (canvas) ──
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const bodies = [
+    { x: 0, y: 0, vx: 0, vy: 0, mass: 2e14, r: 6, color: '#f59e0b', fixed: true },
+    { x: 200, y: 0, vx: 0, vy: 8.2, mass: 1e10, r: 3, color: '#4f8ef7', trail: [] },
+    { x: 340, y: 0, vx: 0, vy: 6.3, mass: 1e10, r: 2.5, color: '#a78bfa', trail: [] },
+    { x: 130, y: 0, vx: 0, vy: 10.4, mass: 1e10, r: 2, color: '#34d399', trail: [] },
+  ];
+
+  const G = 6.674e-11;
+  const dt = 800;
+  const MAX_TRAIL = 160;
+
+  function step() {
+    bodies.forEach(b => {
+      if (b.fixed) return;
+      let ax = 0, ay = 0;
+      bodies.forEach(other => {
+        if (b === other) return;
+        const dx = other.x - b.x, dy = other.y - b.y;
+        const dist = Math.sqrt(dx*dx + dy*dy) + 0.01;
+        const force = G * other.mass / (dist * dist);
+        ax += force * dx / dist;
+        ay += force * dy / dist;
+      });
+      b.vx += ax * dt;
+      b.vy += ay * dt;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.trail.push({ x: b.x, y: b.y });
+      if (b.trail.length > MAX_TRAIL) b.trail.shift();
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+
+    bodies.forEach(b => {
+      if (!b.trail) return;
+      for (let i = 1; i < b.trail.length; i++) {
+        const alpha = i / b.trail.length * 0.55;
+        ctx.beginPath();
+        ctx.strokeStyle = b.color + Math.round(alpha * 255).toString(16).padStart(2, '0');
+        ctx.lineWidth = 1;
+        ctx.moveTo(cx + b.trail[i-1].x, cy + b.trail[i-1].y);
+        ctx.lineTo(cx + b.trail[i].x, cy + b.trail[i].y);
+        ctx.stroke();
+      }
+    });
+
+    bodies.forEach(b => {
+      ctx.beginPath();
+      ctx.arc(cx + b.x, cy + b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = b.color;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = b.color;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    });
+  }
+
+  function loop() {
+    for (let i = 0; i < 3; i++) step();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  loop();
+</script>
+</body>
+</html>
