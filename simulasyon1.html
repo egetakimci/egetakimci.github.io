@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Orbital Simülasyon — Ege</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --border: #1e2d45;
+      --accent: #4f8ef7;
+      --accent2: #a78bfa;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --mono: 'Space Mono', monospace;
+      --sans: 'Space Grotesk', sans-serif;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,14,26,0.9);
+    }
+    nav a {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    nav a:hover { color: var(--accent); }
+    nav span { color: var(--border); }
+    nav .title {
+      color: var(--text);
+      font-weight: 600;
+      font-family: var(--sans);
+      font-size: 0.95rem;
+    }
+
+    .layout {
+      display: flex;
+      flex: 1;
+      gap: 0;
+    }
+
+    /* CANVAS */
+    .canvas-wrap {
+      flex: 1;
+      position: relative;
+      min-height: 0;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* STATS overlay */
+    .stats {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(17,24,39,0.85);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 2;
+      backdrop-filter: blur(8px);
+      min-width: 200px;
+    }
+    .stats span { color: var(--accent); font-weight: 700; }
+
+    /* PANEL */
+    .panel {
+      width: 280px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .panel-section h3 {
+      font-size: 0.72rem;
+      font-family: var(--mono);
+      color: var(--accent);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .control {
+      margin-bottom: 1rem;
+    }
+    .control label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+    .control label em {
+      font-style: normal;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .color-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .color-btn {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .color-btn.active { border-color: var(--text); }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 0.6rem;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #3b7de8; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    .info-box {
+      background: rgba(79,142,247,0.06);
+      border: 1px solid rgba(79,142,247,0.15);
+      border-radius: 6px;
+      padding: 0.8rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 700px) {
+      .layout { flex-direction: column; }
+      .panel { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+      canvas { height: 55vw; min-height: 260px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← Ana sayfa</a>
+  <span>/</span>
+  <span class="title">Orbital Simülasyon</span>
+</nav>
+
+<div class="layout">
+
+  <div class="canvas-wrap">
+    <canvas id="sim"></canvas>
+    <div class="stats" id="stats">
+      Yükleniyor...
+    </div>
+  </div>
+
+  <div class="panel">
+
+    <div class="panel-section">
+      <h3>// Güneş</h3>
+      <div class="control">
+        <label>Kütle <em id="sunMassVal">1.0 M☉</em></label>
+        <input type="range" id="sunMass" min="0.2" max="5" step="0.1" value="1">
+      </div>
+      <div class="control">
+        <label>Renk</label>
+        <div class="color-row" id="sunColors">
+          <div class="color-btn active" data-color="#f59e0b" style="background:#f59e0b"></div>
+          <div class="color-btn" data-color="#f87171" style="background:#f87171"></div>
+          <div class="color-btn" data-color="#fb923c" style="background:#fb923c"></div>
+          <div class="color-btn" data-color="#e879f9" style="background:#e879f9"></div>
+          <div class="color-btn" data-color="#ffffff" style="background:#ffffff"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>// Gezegen</h3>
+      <div class="control">
+        <label>Kütle <em id="pMassVal">1.0 M⊕</em></label>
+        <input type="range" id="pMass" min="0.1" max="10" step="0.1" value="1">
+      </div>
+      <div class="control">
+        <label>Başlangıç Mesafesi <em id="pDistVal">200 AU</em></label>
+        <input type="range" id="pDist" min="80" max="380" step="10" value="200">
+      </div>
+      <div class="control">
+        <label>Yörünge Eğimi <em id="pEccVal">0.0</em></label>
+        <input type="range" id="pEcc" min="0" max="0.7" step="0.05" value="0">
+      </div>
+      <div class="control">
+        <label>Renk</label>
+        <div class="color-row" id="pColors">
+          <div class="color-btn active" data-color="#4f8ef7" style="background:#4f8ef7"></div>
+          <div class="color-btn" data-color="#34d399" style="background:#34d399"></div>
+          <div class="color-btn" data-color="#f87171" style="background:#f87171"></div>
+          <div class="color-btn" data-color="#a78bfa" style="background:#a78bfa"></div>
+          <div class="color-btn" data-color="#fbbf24" style="background:#fbbf24"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>// Kontrol</h3>
+      <div class="control">
+        <label>Hız <em id="speedVal">1×</em></label>
+        <input type="range" id="speed" min="1" max="10" step="1" value="1">
+      </div>
+      <button class="btn btn-primary" id="resetBtn">↺ Sıfırla</button>
+      <br>
+      <button class="btn btn-ghost" id="pauseBtn">⏸ Duraklat</button>
+    </div>
+
+    <div class="info-box">
+      Kütleyi artırınca yörünge hızlanır.<br>
+      Mesafeyi artırınca periyot uzar.<br>
+      Eğim ile eliptik yörünge oluşturabilirsin.
+    </div>
+
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+
+// State
+let paused = false;
+let sunColor = '#f59e0b';
+let pColor = '#4f8ef7';
+
+// Params (scaled)
+let SUN_MASS_FACTOR = 1;
+let P_MASS_FACTOR = 1;
+let P_DIST = 200;
+let P_ECC = 0;
+let SPEED = 1;
+
+const G = 6.674e-11;
+const SUN_MASS_BASE = 2e14;
+const DT = 600;
+const MAX_TRAIL = 300;
+
+let planet, trail;
+
+function initPlanet() {
+  const dist = P_DIST;
+  const sunM = SUN_MASS_BASE * SUN_MASS_FACTOR;
+  // Vis-viva for circular orbit speed, then apply eccentricity
+  const v0 = Math.sqrt(G * sunM / dist);
+  // For eccentric orbit: at periapsis, v = v_circ * sqrt((1+e)/(1-e)) if we treat dist as semi-major
+  // Simpler: start at periapsis
+  const vPeri = v0 * Math.sqrt(1 + P_ECC);
+  planet = { x: dist, y: 0, vx: 0, vy: vPeri };
+  trail = [];
+}
+
+function resize() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+}
+
+window.addEventListener('resize', () => { resize(); });
+resize();
+initPlanet();
+
+function step() {
+  for (let s = 0; s < SPEED; s++) {
+    const dx = -planet.x, dy = -planet.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const sunM = SUN_MASS_BASE * SUN_MASS_FACTOR;
+    const force = G * sunM / (dist * dist);
+    const ax = force * dx / dist;
+    const ay = force * dy / dist;
+    planet.vx += ax * DT;
+    planet.vy += ay * DT;
+    planet.x += planet.vx * DT;
+    planet.y += planet.vy * DT;
+    trail.push({ x: planet.x, y: planet.y });
+    if (trail.length > MAX_TRAIL) trail.shift();
+  }
+}
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+
+  ctx.fillStyle = '#0a0e1a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  // draw static stars by using a seeded pattern
+  for (let i = 0; i < 80; i++) {
+    const sx = ((i * 137 + 11) % W);
+    const sy = ((i * 97 + 53) % H);
+    ctx.fillRect(sx, sy, 1, 1);
+  }
+
+  // Trail
+  for (let i = 1; i < trail.length; i++) {
+    const alpha = i / trail.length * 0.7;
+    ctx.beginPath();
+    ctx.strokeStyle = pColor + Math.round(alpha * 255).toString(16).padStart(2,'0');
+    ctx.lineWidth = 1.5;
+    ctx.moveTo(cx + trail[i-1].x * 0.5, cy + trail[i-1].y * 0.5);
+    ctx.lineTo(cx + trail[i].x * 0.5, cy + trail[i].y * 0.5);
+    ctx.stroke();
+  }
+
+  // Sun glow
+  const sr = 6 + SUN_MASS_FACTOR * 4;
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, sr * 3);
+  grad.addColorStop(0, sunColor + 'cc');
+  grad.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  ctx.arc(cx, cy, sr * 3, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Sun
+  ctx.beginPath();
+  ctx.arc(cx, cy, sr, 0, Math.PI * 2);
+  ctx.fillStyle = sunColor;
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = sunColor;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Planet
+  const px = cx + planet.x * 0.5;
+  const py = cy + planet.y * 0.5;
+  const pr = 2.5 + P_MASS_FACTOR * 1.2;
+  ctx.beginPath();
+  ctx.arc(px, py, pr, 0, Math.PI * 2);
+  ctx.fillStyle = pColor;
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = pColor;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Stats
+  const dist = Math.sqrt(planet.x**2 + planet.y**2);
+  const speed = Math.sqrt(planet.vx**2 + planet.vy**2);
+  document.getElementById('stats').innerHTML =
+    `Mesafe: <span>${(dist/100).toFixed(1)} AU</span><br>` +
+    `Hız: <span>${(speed*0.001).toFixed(2)} km/s</span><br>` +
+    `Güneş Kütlesi: <span>${SUN_MASS_FACTOR.toFixed(1)} M☉</span><br>` +
+    `Gezegen Kütlesi: <span>${P_MASS_FACTOR.toFixed(1)} M⊕</span>`;
+}
+
+function loop() {
+  if (!paused) step();
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+
+// ── Controls ──
+function bindSlider(id, valId, factor, decimals, suffix, callback) {
+  const el = document.getElementById(id);
+  const vEl = document.getElementById(valId);
+  el.addEventListener('input', () => {
+    const v = parseFloat(el.value) * factor;
+    vEl.textContent = v.toFixed(decimals) + suffix;
+    callback(parseFloat(el.value));
+  });
+}
+
+bindSlider('sunMass', 'sunMassVal', 1, 1, ' M☉', v => { SUN_MASS_FACTOR = v; initPlanet(); });
+bindSlider('pMass',   'pMassVal',   1, 1, ' M⊕', v => { P_MASS_FACTOR = v; initPlanet(); });
+bindSlider('pDist',   'pDistVal',   1, 0, ' AU',  v => { P_DIST = v; initPlanet(); });
+bindSlider('pEcc',    'pEccVal',    1, 2, '',      v => { P_ECC = v; initPlanet(); });
+bindSlider('speed',   'speedVal',   1, 0, '×',    v => { SPEED = v; });
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('sunMass').value = 1;
+  document.getElementById('pMass').value = 1;
+  document.getElementById('pDist').value = 200;
+  document.getElementById('pEcc').value = 0;
+  document.getElementById('speed').value = 1;
+  document.getElementById('sunMassVal').textContent = '1.0 M☉';
+  document.getElementById('pMassVal').textContent = '1.0 M⊕';
+  document.getElementById('pDistVal').textContent = '200 AU';
+  document.getElementById('pEccVal').textContent = '0.0';
+  document.getElementById('speedVal').textContent = '1×';
+  SUN_MASS_FACTOR = 1; P_MASS_FACTOR = 1; P_DIST = 200; P_ECC = 0; SPEED = 1;
+  initPlanet();
+});
+
+document.getElementById('pauseBtn').addEventListener('click', function() {
+  paused = !paused;
+  this.textContent = paused ? '▶ Devam et' : '⏸ Duraklat';
+});
+
+// Color pickers
+function bindColors(groupId, callback) {
+  document.getElementById(groupId).querySelectorAll('.color-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById(groupId).querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      callback(btn.dataset.color);
+    });
+  });
+}
+bindColors('sunColors', c => { sunColor = c; });
+bindColors('pColors',   c => { pColor = c; });
+</script>
+</body>
+</html>
